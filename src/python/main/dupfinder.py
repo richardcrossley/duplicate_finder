@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
 import os
-import sys
 import hashlib
+import argparse
 
 g_hash_name = 'sha256'
 
@@ -64,31 +64,32 @@ class CDupFinder:
         return l_duplicate_files_list_list
 
 
-def show_help(script_path):
-    print("Usage:")
-    print("    " + script_path[script_path.rfind("/")+1:] + " [directory_name_1] [directory_name_2] ...")
-    exit(1)
+def verify_arguments(dir_list):
+    non_dir_path_list = list()
+
+    for dir_path in dir_list:
+        if not os.path.isdir(dir_path):
+            print(dir_path + ' is not a directory.')
+            non_dir_path_list.append(dir_path)
+
+    for non_dir_path in non_dir_path_list:
+        dir_list.remove(non_dir_path)
+
+    if len(dir_list) == 0:
+        print('No directories to scan, exiting.')
+        exit(1)
 
 
 def main():
-    dir_list = list()
-
-    if len(sys.argv) == 1:
-        dir_list.append(os.getcwd())
-    else:
-        for dir_name in sys.argv:
-            if dir_name.lower() == '--help' or dir_name.lower == '-h':
-                show_help(sys.argv[0])
-            else:
-                if os.path.isdir(dir_name):
-                    dir_list.append(dir_name)
-                else:
-                    print(dir_name + " is not a directory.")
-
+    parser = argparse.ArgumentParser(description='Scan directories for duplicate files.')
+    parser.add_argument('dir_list', type=str, nargs='+', help='Directory to be scanned.')
+    args = parser.parse_args()
+    dir_list = args.dir_list
+    verify_arguments(dir_list)
     dup_finder = CDupFinder()
     
-    for dir_name in dir_list:
-        dup_finder.scan_directory(dir_name)
+    for dir_path in dir_list:
+        dup_finder.scan_directory(dir_path)
 
     duplicate_files_list_list = dup_finder.duplicate_files_list_list
 
